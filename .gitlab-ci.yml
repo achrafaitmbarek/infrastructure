@@ -10,7 +10,7 @@ deploy-aws:
     - chmod 700 ~/.ssh
   script:
     # On passe les variables AWS à la VM pendant la connexion SSH pour le login ECR
-    - ssh -o StrictHostKeyChecking=no ubuntu@44.201.182.74 "
+    - ssh -o StrictHostKeyChecking=no ubuntu@54.227.143.246 "
       export AWS_ACCESS_KEY_ID=${AWS_ACCESS_KEY_ID} &&
       export AWS_SECRET_ACCESS_KEY=${AWS_SECRET_ACCESS_KEY} &&
       export AWS_DEFAULT_REGION=${AWS_DEFAULT_REGION} &&
