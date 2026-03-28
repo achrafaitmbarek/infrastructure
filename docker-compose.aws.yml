@@ -1,0 +1,78 @@
+version: '3.8'
+
+services:
+  # Une seule base pour tout le monde = économie de RAM
+  postgres:
+    image: postgres:15
+    container_name: postgres-db
+    environment:
+      POSTGRES_DB: authdb
+      POSTGRES_USER: admin
+      POSTGRES_PASSWORD: secret
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+
+  keycloak:
+    image: quay.io/keycloak/keycloak:23.0
+    container_name: keycloak
+    environment:
+      KC_DB: postgres
+      KC_DB_URL: jdbc:postgresql://postgres:5432/authdb
+      KC_DB_USERNAME: admin
+      KC_DB_PASSWORD: secret
+      KEYCLOAK_ADMIN: admin
+      KEYCLOAK_ADMIN_PASSWORD: admin
+      KC_HTTP_ENABLED: "true"
+      KC_HOSTNAME_STRICT: "false"
+      KC_HOSTNAME_STRICT_HTTPS: "false"
+      # Remplace bien par ton IP AWS actuelle
+      KC_HOSTNAME_URL: http://44.201.182.74:8180
+      KC_HOSTNAME_ADMIN_URL: http://44.201.182.74:8180
+    command: start-dev --import-realm
+    depends_on:
+      - postgres
+    ports:
+      - "8180:8080"
+    volumes:
+      - ./realm-export.json:/opt/keycloak/data/import/realm.json
+
+  bank-auth-service:
+    image: 863760761101.dkr.ecr.us-east-1.amazonaws.com/bank-auth-service:latest
+    container_name: bank-auth-service
+    ports:
+      - "8081:8081"
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/authdb
+      SPRING_DATASOURCE_USERNAME: admin
+      SPRING_DATASOURCE_PASSWORD: secret
+      KEYCLOAK_URL: http://keycloak:8080
+      KEYCLOAK_CLIENT_SECRET: OKS1hWzolEz+lffIM1S/MmwrdX0isI8XhdBDJMIsC4o=
+      KEYCLOAK_ISSUER_URI: http://keycloak:8080/realms/bank-app
+      SPRING_KAFKA_BOOTSTRAP_SERVERS: kafka:9092
+    depends_on:
+      - postgres
+      - keycloak
+      - kafka
+
+  zookeeper:
+    image: confluentinc/cp-zookeeper:7.5.0
+    container_name: zookeeper
+    environment:
+      ZOOKEEPER_CLIENT_PORT: 2181
+
+  kafka:
+    image: confluentinc/cp-kafka:7.5.0
+    container_name: kafka
+    depends_on:
+      - zookeeper
+    ports:
+      - "9092:9092"
+    environment:
+      KAFKA_BROKER_ID: 1
+      KAFKA_ZOOKEEPER_CONNECT: zookeeper:2181
+      # On utilise le nom du service "kafka" pour la communication interne Docker
+      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://kafka:9092
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+
+volumes:
+  postgres_data:
