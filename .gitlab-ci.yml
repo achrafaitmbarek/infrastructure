@@ -9,7 +9,7 @@ deploy-aws:
     - mkdir -p ~/.ssh
     - chmod 700 ~/.ssh
   script:
-    # On passe les variables AWS à la VM pendant la connexion SSH pour le login ECR
+    # n passe les variables AWS à la VM pendant la connexion SSH pour le login ECR
     - ssh -o StrictHostKeyChecking=no ubuntu@54.227.143.246 "
       export AWS_ACCESS_KEY_ID=${AWS_ACCESS_KEY_ID} &&
       export AWS_SECRET_ACCESS_KEY=${AWS_SECRET_ACCESS_KEY} &&
@@ -18,6 +18,7 @@ deploy-aws:
       git pull origin main &&
       aws ecr get-login-password --region \$AWS_DEFAULT_REGION | docker login --username AWS --password-stdin ${AWS_ECR_REGISTRY} &&
       docker-compose -f docker-compose.aws.yml pull &&
-      docker-compose -f docker-compose.aws.yml up -d"
+      docker-compose -f docker-compose.aws.yml up -d &&
+      docker system prune -af"
   only:
     - main
