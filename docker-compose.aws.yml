@@ -1,10 +1,10 @@
 version: '3.8'
 
 services:
-  # Une seule base pour tout le monde = économie de RAM
+  # Naaan une seule base pour tout le monde = économie de RAM
   postgres:
     image: postgres:15
-    container_name: postgres-db
+    container_name: postgres-db # Toi t'es un commentaire de test pour vérifier le pull côté ECR AWSsss
     environment:
       POSTGRES_DB: authdb
       POSTGRES_USER: admin
@@ -25,7 +25,6 @@ services:
       KC_HTTP_ENABLED: "true"
       KC_HOSTNAME_STRICT: "false"
       KC_HOSTNAME_STRICT_HTTPS: "false"
-      # Remplace bien par ton IP AWS actuelle
       KC_HOSTNAME_URL: http://44.201.182.74:8180
       KC_HOSTNAME_ADMIN_URL: http://44.201.182.74:8180
     command: start-dev --import-realm
