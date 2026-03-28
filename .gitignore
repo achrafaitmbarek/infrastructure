@@ -1,1 +1,15 @@
+# Système
+.DS_Store
+Thumbs.db
+
+# Docker logs & temp
+*.log
+.docker/
+
+# IDE
 .idea/
+.vscode/
+*.swp
+
+# Ne pas inclure de secrets locaux s'il y en a
+.env.local
