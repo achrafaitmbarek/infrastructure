@@ -24,8 +24,9 @@ deploy-aws:
       cd /home/ubuntu/infrastructure &&
       git pull origin main &&
       aws ecr get-login-password --region \$AWS_DEFAULT_REGION | docker login --username AWS --password-stdin ${AWS_ECR_REGISTRY} &&
+      docker compose -f docker-compose.aws.yml down &&
       docker compose -f docker-compose.aws.yml pull &&
-      docker compose -f docker-compose.aws.yml up -d --force-recreate &&
+      docker compose -f docker-compose.aws.yml up -d &&
       docker system prune -af"
   only:
     - main
