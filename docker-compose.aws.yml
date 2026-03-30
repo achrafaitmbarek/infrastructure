@@ -1,16 +1,16 @@
 version: '3.8'
 
 services:
-  # Naaan une seule base pour tout le monde = économie de RAM
   postgres:
     image: postgres:15
-    container_name: postgres-db # Toi t'es un commentaire de test pour vérifier le pull côté ECR AWSsss
+    container_name: postgres-db
     environment:
       POSTGRES_DB: authdb
-      POSTGRES_USER: admin
-      POSTGRES_PASSWORD: secret
+      POSTGRES_USER: ${DB_USER}
+      POSTGRES_PASSWORD: ${DB_PASSWORD}
     volumes:
       - postgres_data:/var/lib/postgresql/data
+    restart: always
 
   keycloak:
     image: quay.io/keycloak/keycloak:23.0
@@ -18,15 +18,15 @@ services:
     environment:
       KC_DB: postgres
       KC_DB_URL: jdbc:postgresql://postgres:5432/authdb
-      KC_DB_USERNAME: admin
-      KC_DB_PASSWORD: secret
-      KEYCLOAK_ADMIN: admin
-      KEYCLOAK_ADMIN_PASSWORD: admin
+      KC_DB_USERNAME: ${DB_USER}
+      KC_DB_PASSWORD: ${DB_PASSWORD}
+      KEYCLOAK_ADMIN: ${KC_ADMIN_USER}
+      KEYCLOAK_ADMIN_PASSWORD: ${KC_ADMIN_PASSWORD}
       KC_HTTP_ENABLED: "true"
       KC_HOSTNAME_STRICT: "false"
       KC_HOSTNAME_STRICT_HTTPS: "false"
-      KC_HOSTNAME_URL: http://54.227.143.246:8180
-      KC_HOSTNAME_ADMIN_URL: http://54.227.143.246:8180
+      KC_HOSTNAME_URL: http://${EC2_HOST}:8180
+      KC_HOSTNAME_ADMIN_URL: http://${EC2_HOST}:8180
     command: start-dev --import-realm
     depends_on:
       - postgres
@@ -34,6 +34,7 @@ services:
       - "8180:8080"
     volumes:
       - ./realm-export.json:/opt/keycloak/data/import/realm.json
+    restart: always
 
   bank-auth-service:
     image: 863760761101.dkr.ecr.us-east-1.amazonaws.com/bank-auth-service:latest
@@ -42,10 +43,10 @@ services:
       - "8081:8081"
     environment:
       SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/authdb
-      SPRING_DATASOURCE_USERNAME: admin
-      SPRING_DATASOURCE_PASSWORD: secret
+      SPRING_DATASOURCE_USERNAME: ${DB_USER}
+      SPRING_DATASOURCE_PASSWORD: ${DB_PASSWORD}
       KEYCLOAK_URL: http://keycloak:8080
-      KEYCLOAK_CLIENT_SECRET: OKS1hWzolEz+lffIM1S/MmwrdX0isI8XhdBDJMIsC4o=
+      KEYCLOAK_CLIENT_SECRET: ${KEYCLOAK_CLIENT_SECRET}
       KEYCLOAK_ISSUER_URI: http://keycloak:8080/realms/bank-app
       SPRING_KAFKA_BOOTSTRAP_SERVERS: kafka:9092
     depends_on:
@@ -53,11 +54,13 @@ services:
       - keycloak
       - kafka
 
+    restart: always
   zookeeper:
     image: confluentinc/cp-zookeeper:7.5.0
     container_name: zookeeper
     environment:
       ZOOKEEPER_CLIENT_PORT: 2181
+    restart: always
 
   kafka:
     image: confluentinc/cp-kafka:7.5.0
@@ -72,6 +75,7 @@ services:
       # On utilise le nom du service "kafka" pour la communication interne Docker
       KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://kafka:9092
       KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+    restart: always
 
 volumes:
   postgres_data:
